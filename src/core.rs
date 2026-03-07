@@ -1,5 +1,5 @@
-use avian3d::PhysicsPlugins;
 use avian3d::prelude::PhysicsDebugPlugin;
+use avian3d::PhysicsPlugins;
 use bevy::asset::AssetMetaCheck;
 use bevy::prelude::*;
 use bevy::window::WindowMode;
@@ -9,7 +9,7 @@ pub struct CorePlugin;
 
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
+        app.add_plugins(
             DefaultPlugins
                 .set(AssetPlugin {
                     // Wasm builds will check for meta files (that don't exist) if this isn't set.
@@ -25,12 +25,54 @@ impl Plugin for CorePlugin {
                         fit_canvas_to_parent: true,
                         ..default()
                     }
-                        .into(),
+                    .into(),
                     ..default()
                 }),
-            EnhancedInputPlugin,
-            PhysicsPlugins::default(),
-            PhysicsDebugPlugin
+        );
+        app.add_plugins(MeshPickingPlugin);
+        app.add_plugins(EnhancedInputPlugin);
+        app.add_plugins(PhysicsPlugins::default());
+        app.add_plugins(PhysicsDebugPlugin);
+
+        app.add_systems(Update, restore_primitive_meshes);
+    }
+}
+
+/// Marker for entities that belong to the scene and should be serialized.
+/// Every primitive placed from the palette gets this component.
+#[derive(Component, Reflect, Default)]
+#[reflect(Component)]
+pub struct SceneEntity;
+
+#[derive(Component, Reflect, Default)]
+#[reflect(Component)]
+pub enum PrimitiveType {
+    #[default]
+    Cube,
+    Sphere,
+    Plane,
+    Cylinder,
+}
+
+pub fn restore_primitive_meshes(
+    query: Query<(Entity, &PrimitiveType), Without<Mesh3d>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for (entity, primitive_type) in query.iter() {
+        let mesh = match primitive_type {
+            PrimitiveType::Cube => meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
+            PrimitiveType::Sphere => meshes.add(Sphere::new(0.5)),
+            PrimitiveType::Plane => meshes.add(Plane3d::default().mesh().size(1.0, 1.0)),
+            PrimitiveType::Cylinder => meshes.add(Cylinder::new(0.5, 1.0)),
+        };
+        commands.entity(entity).insert((
+            Mesh3d(mesh),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.8, 0.8, 0.8),
+                ..default()
+            })),
         ));
     }
 }

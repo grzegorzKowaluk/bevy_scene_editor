@@ -1,0 +1,17 @@
+(
+  resources: {},
+  entities: {
+    4294967172: (
+      components: {
+        "bevy_ecs::name::Name": "Cube",
+        "bevy_scene_editor::core::PrimitiveType": Cube,
+        "bevy_scene_editor::core::SceneEntity": (),
+        "bevy_transform::components::transform::Transform": (
+          translation: (0.0, 0.0, 0.0),
+          rotation: (0.0, 0.0, 0.0, 1.0),
+          scale: (2.1987643, 2.7896, 3.3267148),
+        ),
+      },
+    ),
+  },
+)
